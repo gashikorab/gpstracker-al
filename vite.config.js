@@ -8,8 +8,17 @@ export default defineConfig(() => ({
   server: {
     port: 3000,
     proxy: {
-      '/api/socket': 'ws://localhost:8082',
-      '/api': 'http://localhost:8082',
+      '/api/socket': {
+        target: 'https://gpstracker.al',
+        ws: true,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/api': {
+        target: 'https://gpstracker.al',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {

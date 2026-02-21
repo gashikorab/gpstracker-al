@@ -52,12 +52,49 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(2),
   },
+  textField: {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: '#ffffff',
+      color: '#000000',
+    },
+    '& .MuiOutlinedInput-input': {
+      color: '#000000',
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(0, 0, 0, 0.2)',
+    },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(0, 0, 0, 0.4)',
+    },
+    '& .MuiInputLabel-root': {
+      color: '#000000',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#000000',
+    },
+    '& .MuiIconButton-root': {
+      color: '#000000',
+    },
+  },
   extraContainer: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: theme.spacing(4),
     marginTop: theme.spacing(2),
+  },
+  loginButton: {
+    backgroundColor: '#d1d5db',
+    color: '#111827',
+    boxShadow: 'none',
+    '&:hover': {
+      backgroundColor: '#c3c7cf',
+      boxShadow: 'none',
+    },
+    '&.Mui-disabled': {
+      backgroundColor: '#e5e7eb',
+      color: 'rgba(17, 24, 39, 0.6)',
+    },
   },
   registerButton: {
     minWidth: 'unset',
@@ -202,6 +239,7 @@ const LoginPage = () => {
             <TextField
               required
               error={failed}
+              className={classes.textField}
               label={t('userEmail')}
               name="email"
               value={email}
@@ -213,6 +251,7 @@ const LoginPage = () => {
             <TextField
               required
               error={failed}
+              className={classes.textField}
               label={t('userPassword')}
               name="password"
               value={password}
@@ -240,6 +279,7 @@ const LoginPage = () => {
               <TextField
                 required
                 error={failed}
+                className={classes.textField}
                 label={t('loginTotpCode')}
                 name="code"
                 value={code}
@@ -252,6 +292,7 @@ const LoginPage = () => {
               type="submit"
               variant="contained"
               color="secondary"
+              className={classes.loginButton}
               disabled={!email || !password || (codeEnabled && !code)}
             >
               {t('loginLogin')}

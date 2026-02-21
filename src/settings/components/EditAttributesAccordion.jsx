@@ -33,6 +33,7 @@ import {
   volumeUnitString,
 } from '../../common/util/converter';
 import useFeatures from '../../common/util/useFeatures';
+import { useAdministrator } from '../../common/util/permissions';
 import useSettingsStyles from '../common/useSettingsStyles';
 
 const EditAttributesAccordion = ({
@@ -46,6 +47,7 @@ const EditAttributesAccordion = ({
   const t = useTranslation();
 
   const features = useFeatures();
+  const isAdmin = useAdministrator();
 
   const speedUnit = useAttributePreference('speedUnit');
   const distanceUnit = useAttributePreference('distanceUnit');
@@ -80,7 +82,7 @@ const EditAttributesAccordion = ({
 
   const getAttributeName = (key, subtype) => {
     const definition = definitions[key];
-    const name = definition ? definition.name : key;
+    const name = key === 'retentionDays' ? 'Retention Days' : definition ? definition.name : key;
     switch (subtype) {
       case 'speed':
         return `${name} (${speedUnitString(speedUnit, t)})`;
@@ -185,6 +187,7 @@ const EditAttributesAccordion = ({
       </AccordionSummary>
       <AccordionDetails className={classes.details}>
         {convertToList(attributes).map(({ key, value, type, subtype }) => {
+          const isRetentionLocked = !isAdmin && key === 'retentionDays';
           if (type === 'boolean') {
             return (
               <Grid container direction="row" justifyContent="space-between" key={key}>
@@ -192,18 +195,26 @@ const EditAttributesAccordion = ({
                   control={
                     <Checkbox
                       checked={value}
-                      onChange={(e) => updateAttribute(key, e.target.checked)}
+                      disabled={isRetentionLocked}
+                      onChange={(e) => {
+                        if (isRetentionLocked) {
+                          return;
+                        }
+                        updateAttribute(key, e.target.checked);
+                      }}
                     />
                   }
                   label={getAttributeName(key, subtype)}
                 />
-                <IconButton
-                  size="small"
-                  className={classes.removeButton}
-                  onClick={() => deleteAttribute(key)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
+                {!isRetentionLocked && (
+                  <IconButton
+                    size="small"
+                    className={classes.removeButton}
+                    onClick={() => deleteAttribute(key)}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Grid>
             );
           }
@@ -214,14 +225,25 @@ const EditAttributesAccordion = ({
                 label={getAttributeName(key, subtype)}
                 type={type === 'number' ? 'number' : 'text'}
                 value={getDisplayValue(value, subtype)}
-                onChange={(e) => updateAttribute(key, e.target.value, type, subtype)}
+                disabled={isRetentionLocked}
+                inputProps={{
+                  readOnly: isRetentionLocked,
+                }}
+                onChange={(e) => {
+                  if (isRetentionLocked) {
+                    return;
+                  }
+                  updateAttribute(key, e.target.value, type, subtype);
+                }}
                 autoFocus={focusAttribute === key}
                 endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton size="small" edge="end" onClick={() => deleteAttribute(key)}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
+                  !isRetentionLocked && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" edge="end" onClick={() => deleteAttribute(key)}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  )
                 }
               />
             </FormControl>
