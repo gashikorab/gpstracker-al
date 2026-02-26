@@ -34,6 +34,9 @@ import StatisticsPage from './reports/StatisticsPage';
 import LoginPage from './login/LoginPage';
 import RegisterPage from './login/RegisterPage';
 import ResetPasswordPage from './login/ResetPasswordPage';
+import TermsPage from './login/TermsPage';
+import PrivacyPage from './login/PrivacyPage';
+import ContactPage from './login/ContactPage';
 import GeofencesPage from './other/GeofencesPage';
 import GeofencePage from './settings/GeofencePage';
 import { useEffectAsync } from './reactHelper';
@@ -110,12 +113,16 @@ const Navigation = () => {
   if (hasQueryParams) {
     return <Loader />;
   }
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/change-server" element={<ChangeServerPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/" element={<App />}>
         <Route index element={<MainPage />} />
 
