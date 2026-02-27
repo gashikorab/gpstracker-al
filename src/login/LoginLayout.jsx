@@ -43,6 +43,13 @@ const useStyles = makeStyles()((theme) => ({
       padding: theme.spacing(3),
       gap: theme.spacing(3),
     },
+
+    // App (WebView) mode: center the card, remove split layout spacing
+    ':global(.is-app) &': {
+      justifyContent: 'center',
+      padding: theme.spacing(3),
+      gap: theme.spacing(0),
+    },
   },
   left: {
     flex: 1,
@@ -50,8 +57,12 @@ const useStyles = makeStyles()((theme) => ({
     color: '#ffffff',
 
     [theme.breakpoints.down('md')]: {
-      maxWidth: '100%',
-      textAlign: 'center',
+      display: 'none',
+    },
+
+    // Hide the left info area inside the mobile app
+    ':global(.is-app) &': {
+      display: 'none',
     },
   },
   leftCard: {
@@ -71,6 +82,12 @@ const useStyles = makeStyles()((theme) => ({
       width: '100%',
       justifyContent: 'center',
     },
+
+    // App mode: take full width and center
+    ':global(.is-app) &': {
+      width: '100%',
+      justifyContent: 'center',
+    },
   },
   card: {
     width: 420,
@@ -84,6 +101,12 @@ const useStyles = makeStyles()((theme) => ({
       width: '100%',
       maxWidth: 420,
       padding: theme.spacing(4),
+    },
+
+    // App mode: slightly tighter padding for smaller screens
+    ':global(.is-app) &': {
+      padding: theme.spacing(4),
+      boxShadow: '0 12px 28px rgba(0,0,0,0.20)',
     },
   },
   logo: {
@@ -112,6 +135,15 @@ const useStyles = makeStyles()((theme) => ({
     background: 'rgba(255,255,255,0.92)',
     borderTop: '1px solid rgba(0,0,0,0.08)',
     backdropFilter: 'blur(6px)',
+
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
+
+    // Hide footer inside the mobile app
+    ':global(.is-app) &': {
+      display: 'none',
+    },
   },
   footerInner: {
     width: '100%',

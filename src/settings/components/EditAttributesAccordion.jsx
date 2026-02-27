@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import {
   Button,
@@ -33,7 +34,6 @@ import {
   volumeUnitString,
 } from '../../common/util/converter';
 import useFeatures from '../../common/util/useFeatures';
-import { useAdministrator } from '../../common/util/permissions';
 import useSettingsStyles from '../common/useSettingsStyles';
 
 const EditAttributesAccordion = ({
@@ -47,7 +47,7 @@ const EditAttributesAccordion = ({
   const t = useTranslation();
 
   const features = useFeatures();
-  const isAdmin = useAdministrator();
+  const isAdmin = useSelector((state) => state.session.user?.administrator);
 
   const speedUnit = useAttributePreference('speedUnit');
   const distanceUnit = useAttributePreference('distanceUnit');

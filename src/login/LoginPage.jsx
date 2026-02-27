@@ -183,6 +183,22 @@ const LoginPage = () => {
 
   useEffect(() => nativePostMessage('authentication'), []);
 
+  const isApp = nativeEnvironment || (navigator.userAgent && navigator.userAgent.includes('GPSTrackerApp'));
+
+  useEffect(() => {
+    if (isApp) {
+      document.documentElement.classList.add('is-app');
+      document.body.classList.add('is-app');
+    } else {
+      document.documentElement.classList.remove('is-app');
+      document.body.classList.remove('is-app');
+    }
+    return () => {
+      document.documentElement.classList.remove('is-app');
+      document.body.classList.remove('is-app');
+    };
+  }, [isApp]);
+
   useEffect(() => {
     const listener = (token) => handleTokenLogin(token);
     handleLoginTokenListeners.add(listener);

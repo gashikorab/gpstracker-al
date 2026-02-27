@@ -13,15 +13,15 @@ export default function ContactPage() {
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper sx={{ p: 4, borderRadius: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-          Kontakti
+          Contact
         </Typography>
 
         <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
-          Na kontaktoni për çdo pyetje rreth shërbimit, instalimit ose mbështetjes teknike.
+          Contact us for any questions regarding the service, installation, or technical support.
         </Typography>
 
         <Typography variant="h6" sx={{ mb: 1 }}>
-          Telefoni
+          Phone
         </Typography>
 
         <Typography variant="body2" sx={{ mb: 1 }}>
@@ -55,7 +55,7 @@ export default function ContactPage() {
         </Box>
 
         <MuiLink component={RouterLink} to="/login" underline="hover">
-          ← Kthehu te Login
+          ← Back to Login
         </MuiLink>
       </Paper>
     </Container>

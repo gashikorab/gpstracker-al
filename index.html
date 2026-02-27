@@ -27,6 +27,42 @@
         to { transform: rotate(1turn); }
       }
     </style>
+    <script>
+      (function () {
+        try {
+          var ua = navigator.userAgent || '';
+          var isApp = ua.indexOf('GPSTrackerApp') !== -1;
+
+          // Add class ASAP so CSS can target app quickly
+          if (isApp) {
+            document.documentElement.classList.add('is-app');
+          }
+
+          // Body might not exist yet
+          document.addEventListener('DOMContentLoaded', function () {
+            if (isApp && document.body) {
+              document.body.classList.add('is-app');
+            }
+          });
+
+          // Disable PWA caching ONLY inside the app (so changes go live)
+          if (isApp && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) {
+                r.unregister();
+              });
+            });
+          }
+          if (isApp && window.caches && caches.keys) {
+            caches.keys().then(function (keys) {
+              keys.forEach(function (k) {
+                caches.delete(k);
+              });
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <noscript>Enable JavaScript to use GPS Tracker Albania.</noscript>

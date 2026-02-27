@@ -25,10 +25,34 @@ export default defineConfig(() => ({
     outDir: 'build',
   },
   plugins: [
+    // Local dev helper: Traccar UI calls /api/server on startup.
+    // If the backend isn't running locally (or the live server is unreachable), the UI can hang.
+    // This mock lets you preview UI/layout changes locally.
+    {
+      name: 'mock-api-server',
+      configureServer(server) {
+        server.middlewares.use('/api/server', (req, res) => {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.end(
+            JSON.stringify({
+              // minimal fields used by the UI
+              attributes: {},
+              registration: false,
+              emailEnabled: false,
+              openIdEnabled: false,
+              openIdForce: false,
+              announcement: null,
+            }),
+          );
+        });
+      },
+    },
     svgr(),
     react(),
     VitePWA({
-      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
+      includeAssets: ['favicon', 'apple-touch-icon-180x180.png'],
+      devOptions: { enabled: false },
       workbox: {
         navigateFallbackDenylist: [/^\/api/],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
