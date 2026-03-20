@@ -133,7 +133,7 @@ const DevicePage = () => {
                 label={t('sharedCalendar')}
               />
               <TextField
-                label={t('userExpirationTime')}
+                label="Device Expiration"
                 type="date"
                 value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
                 onChange={(e) => {
@@ -142,6 +142,21 @@ const DevicePage = () => {
                   }
                 }}
                 disabled={!admin}
+              />
+              <TextField
+                label="Registration / Insurance Expiry"
+                type="date"
+                value={item.registrationExpiry ? item.registrationExpiry.split('T')[0] : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setItem({
+                      ...item,
+                      registrationExpiry: new Date(e.target.value).toISOString(),
+                    });
+                  } else {
+                    setItem({ ...item, registrationExpiry: null });
+                  }
+                }}
               />
               <FormControlLabel
                 control={

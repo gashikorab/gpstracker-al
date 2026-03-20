@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
@@ -64,6 +64,7 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     paddingBottom: theme.spacing(0.75),
     maxHeight: theme.dimensions.cardContentMaxHeight,
     overflow: 'auto',
+    touchAction: 'pan-y',
   },
   icon: {
     width: '25px',
@@ -101,6 +102,7 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     backgroundColor: 'transparent',
     padding: 0,
     minWidth: 0,
+    cursor: 'pointer',
   },
   pageDotActive: {
     backgroundColor: theme.palette.text.primary,
@@ -186,10 +188,108 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
 
   const [removing, setRemoving] = useState(false);
   const [page, setPage] = useState(0);
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
+  const mouseStartX = useRef(null);
+  const mouseEndX = useRef(null);
+  const isMouseDragging = useRef(false);
+  const swipeThreshold = 40;
   const page0Items = positionItems.split(',').slice(0, 4);
-  const extraPageItems = ['latitude', 'longitude', 'course', 'altitude', 'accuracy'];
+  const extraPageItems = ['expirationTime', 'registrationExpiry', 'course', 'altitude', 'accuracy'];
   const page1Items = extraPageItems.slice(0, 4);
   const totalPages = 2;
+
+  const formatExpiryWithDaysLeft = (dateValue) => {
+    if (!dateValue) {
+      return '';
+    }
+
+    const expiryDate = new Date(dateValue);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiryDate.setHours(0, 0, 0, 0);
+
+    const diffMs = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 0) {
+      return `${diffDays} days left`;
+    }
+    if (diffDays === 0) {
+      return 'expires today';
+    }
+    return `${Math.abs(diffDays)} days overdue`;
+  };
+
+  const handleTouchStart = (event) => {
+    touchStartX.current = event.changedTouches[0].clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (event) => {
+    touchEndX.current = event.changedTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current == null || touchEndX.current == null) {
+      return;
+    }
+
+    const deltaX = touchStartX.current - touchEndX.current;
+
+    if (Math.abs(deltaX) < swipeThreshold) {
+      return;
+    }
+
+    if (deltaX > 0 && page < totalPages - 1) {
+      setPage(page + 1);
+    } else if (deltaX < 0 && page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleMouseDown = (event) => {
+    isMouseDragging.current = true;
+    mouseStartX.current = event.clientX;
+    mouseEndX.current = null;
+  };
+
+  const handleMouseMove = (event) => {
+    if (!isMouseDragging.current) {
+      return;
+    }
+    mouseEndX.current = event.clientX;
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDragging.current) {
+      return;
+    }
+
+    isMouseDragging.current = false;
+
+    if (mouseStartX.current == null || mouseEndX.current == null) {
+      return;
+    }
+
+    const deltaX = mouseStartX.current - mouseEndX.current;
+
+    if (Math.abs(deltaX) < swipeThreshold) {
+      return;
+    }
+
+    if (deltaX > 0 && page < totalPages - 1) {
+      setPage(page + 1);
+    } else if (deltaX < 0 && page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isMouseDragging.current = false;
+    mouseStartX.current = null;
+    mouseEndX.current = null;
+  };
 
   const handleRemove = useCatch(async (removed) => {
     if (removed) {
@@ -259,7 +359,16 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </div>
               )}
               {position && (
-                <CardContent className={classes.content}>
+                <CardContent
+                  className={classes.content}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                >
                   <Table size="small" classes={{ root: classes.table }}>
                     <TableBody>
                       {page === 0 && page0Items
@@ -267,41 +376,73 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                           (key) =>
                             position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key),
                         )
-                        .map((key) => (
-                          <StatusRow
-                            key={key}
-                            name={positionAttributes[key]?.name || key}
-                            content={
+                        .map((key) => {
+                          const name = positionAttributes[key]?.name || key;
+                          let content;
+
+                          if (key === 'ignition') {
+                            const ignitionValue = position.hasOwnProperty(key)
+                              ? position[key]
+                              : position.attributes[key];
+                            content = ignitionValue ? 'On' : 'Off';
+                          } else {
+                            content = (
                               <PositionValue
                                 position={position}
                                 property={position.hasOwnProperty(key) ? key : null}
                                 attribute={position.hasOwnProperty(key) ? null : key}
                               />
-                            }
-                          />
-                        ))}
+                            );
+                          }
+
+                          return (
+                            <StatusRow
+                              key={key}
+                              name={name}
+                              content={content}
+                            />
+                          );
+                        })}
                       {page === 1 && page1Items
-                        .filter(
-                          (key) =>
-                            position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key),
-                        )
-                        .map((key) => (
-                          <StatusRow
-                            key={key}
-                            name={positionAttributes[key]?.name || key}
-                            content={
+                        .filter((key) => {
+                          if (key === 'expirationTime' || key === 'registrationExpiry') {
+                            return Boolean(device?.[key]);
+                          }
+                          return position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key);
+                        })
+                        .map((key) => {
+                          let content;
+                          let name;
+
+                          if (key === 'expirationTime') {
+                            name = 'Device Expiry';
+                            content = formatExpiryWithDaysLeft(device.expirationTime);
+                          } else if (key === 'registrationExpiry') {
+                            name = 'Insurance Expiry';
+                            content = formatExpiryWithDaysLeft(device.registrationExpiry);
+                          } else {
+                            name = positionAttributes[key]?.name || key;
+                            content = (
                               <PositionValue
                                 position={position}
                                 property={position.hasOwnProperty(key) ? key : null}
                                 attribute={position.hasOwnProperty(key) ? null : key}
                               />
-                            }
-                          />
-                        ))}
+                            );
+                          }
+
+                          return (
+                            <StatusRow
+                              key={key}
+                              name={name}
+                              content={content}
+                            />
+                          );
+                        })}
                     </TableBody>
                   </Table>
                   <div className={classes.pageDots}>
-                    {[0, 1].map((dotPage) => (
+                    {Array.from({ length: totalPages }, (_, dotPage) => (
                       <IconButton
                         key={dotPage}
                         size="small"
