@@ -57,10 +57,11 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: theme.spacing(1, 1, 0, 2),
+    gap: theme.spacing(1),
   },
   content: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
+    paddingTop: theme.spacing(0.75),
+    paddingBottom: theme.spacing(0.75),
     maxHeight: theme.dimensions.cardContentMaxHeight,
     overflow: 'auto',
   },
@@ -70,6 +71,8 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     filter: 'brightness(0) invert(1)',
   },
   table: {
+    tableLayout: 'fixed',
+    width: '100%',
     '& .MuiTableCell-sizeSmall': {
       paddingLeft: 0,
       paddingRight: 0,
@@ -83,6 +86,25 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
   actions: {
     justifyContent: 'space-between',
+  },
+  pageDots: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
+  },
+  pageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    border: `1px solid ${theme.palette.text.secondary}`,
+    backgroundColor: 'transparent',
+    padding: 0,
+    minWidth: 0,
+  },
+  pageDotActive: {
+    backgroundColor: theme.palette.text.primary,
+    borderColor: theme.palette.text.primary,
   },
   root: {
     pointerEvents: 'none',
@@ -106,11 +128,29 @@ const StatusRow = ({ name, content }) => {
 
   return (
     <TableRow>
-      <TableCell className={classes.cell}>
-        <Typography variant="body2">{name}</Typography>
+      <TableCell
+        className={classes.cell}
+        sx={{
+          py: 0.5,
+          pr: 1,
+          width: '36%',
+          whiteSpace: 'nowrap',
+          verticalAlign: 'top',
+        }}
+      >
+        <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{name}</Typography>
       </TableCell>
-      <TableCell className={classes.cell}>
-        <Typography variant="body2" color="textSecondary">
+      <TableCell
+        className={classes.cell}
+        align="right"
+        sx={{
+          py: 0.5,
+          pl: 2,
+          pr: 0,
+          verticalAlign: 'top',
+        }}
+      >
+        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.78rem' }}>
           {content}
         </Typography>
       </TableCell>
@@ -145,6 +185,11 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [removing, setRemoving] = useState(false);
+  const [page, setPage] = useState(0);
+  const page0Items = positionItems.split(',').slice(0, 4);
+  const extraPageItems = ['latitude', 'longitude', 'course', 'altitude', 'accuracy'];
+  const page1Items = extraPageItems.slice(0, 4);
+  const totalPages = 2;
 
   const handleRemove = useCatch(async (removed) => {
     if (removed) {
@@ -195,9 +240,19 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </CardMedia>
               ) : (
                 <div className={`${classes.header} draggable-header`}>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.95rem', flex: 1 }}>
                     {device.name}
                   </Typography>
+                  {position && (
+                    <Link
+                      component={RouterLink}
+                      to={`/position/${position.id}`}
+                      underline="hover"
+                      sx={{ fontSize: '0.74rem', whiteSpace: 'nowrap' }}
+                    >
+                      {t('sharedShowDetails')}
+                    </Link>
+                  )}
                   <IconButton size="small" onClick={onClose} onTouchStart={onClose}>
                     <CloseIcon fontSize="small" />
                   </IconButton>
@@ -207,8 +262,25 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 <CardContent className={classes.content}>
                   <Table size="small" classes={{ root: classes.table }}>
                     <TableBody>
-                      {positionItems
-                        .split(',')
+                      {page === 0 && page0Items
+                        .filter(
+                          (key) =>
+                            position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key),
+                        )
+                        .map((key) => (
+                          <StatusRow
+                            key={key}
+                            name={positionAttributes[key]?.name || key}
+                            content={
+                              <PositionValue
+                                position={position}
+                                property={position.hasOwnProperty(key) ? key : null}
+                                attribute={position.hasOwnProperty(key) ? null : key}
+                              />
+                            }
+                          />
+                        ))}
+                      {page === 1 && page1Items
                         .filter(
                           (key) =>
                             position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key),
@@ -227,18 +299,17 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                           />
                         ))}
                     </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={2} className={classes.cell}>
-                          <Typography variant="body2">
-                            <Link component={RouterLink} to={`/position/${position.id}`}>
-                              {t('sharedShowDetails')}
-                            </Link>
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
                   </Table>
+                  <div className={classes.pageDots}>
+                    {[0, 1].map((dotPage) => (
+                      <IconButton
+                        key={dotPage}
+                        size="small"
+                        onClick={() => setPage(dotPage)}
+                        className={`${classes.pageDot} ${page === dotPage ? classes.pageDotActive : ''}`}
+                      />
+                    ))}
+                  </div>
                 </CardContent>
               )}
               <CardActions classes={{ root: classes.actions }} disableSpacing>

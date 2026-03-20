@@ -16,6 +16,7 @@ import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
 import Battery20Icon from '@mui/icons-material/Battery20';
 import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
 import ErrorIcon from '@mui/icons-material/Error';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { devicesActions } from '../store';
@@ -39,8 +40,8 @@ dayjs.extend(relativeTime);
 
 const useStyles = makeStyles()((theme) => ({
   icon: {
-    width: '25px',
-    height: '25px',
+    width: '20px',
+    height: '20px',
     filter: 'brightness(0) invert(1)',
   },
   batteryText: {
@@ -62,6 +63,11 @@ const useStyles = makeStyles()((theme) => ({
   },
   selected: {
     backgroundColor: theme.palette.action.selected,
+  },
+  row: {
+    minHeight: 56,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
 }));
 
@@ -97,25 +103,15 @@ const DeviceRow = ({ devices, index, style }) => {
   const primaryValue = resolveFieldValue(devicePrimary);
   const secondaryValue = resolveFieldValue(deviceSecondary);
 
-  const secondaryText = () => {
-    let status;
-    if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
-    } else {
-      status = dayjs(item.lastUpdate).fromNow();
+  const secondaryText = () => secondaryValue || null;
+
+  const statusTooltip = (() => {
+    const baseStatus = item.status === 'unknown' ? t('deviceUnknown') : formatStatus(item.status, t);
+    if (item.status !== 'online' && item.lastUpdate) {
+      return `${baseStatus} ${dayjs(item.lastUpdate).fromNow()}`;
     }
-    return (
-      <>
-        {secondaryValue && (
-          <>
-            {secondaryValue}
-            {' • '}
-          </>
-        )}
-        <span className={classes[getStatusColor(item.status)]}>{status}</span>
-      </>
-    );
-  };
+    return baseStatus;
+  })();
 
   return (
     <div style={style}>
@@ -124,10 +120,10 @@ const DeviceRow = ({ devices, index, style }) => {
         onClick={() => dispatch(devicesActions.selectId(item.id))}
         disabled={!admin && item.disabled}
         selected={selectedDeviceId === item.id}
-        className={selectedDeviceId === item.id ? classes.selected : null}
+        className={`${classes.row} ${selectedDeviceId === item.id ? classes.selected : ''}`}
       >
         <ListItemAvatar>
-          <Avatar>
+          <Avatar sx={{ width: 34, height: 34 }}>
             <img className={classes.icon} src={mapIcons[mapIconKey(item.category)]} alt="" />
           </Avatar>
         </ListItemAvatar>
@@ -139,12 +135,32 @@ const DeviceRow = ({ devices, index, style }) => {
             secondary: Typography,
           }}
           slotProps={{
-            primary: { noWrap: true },
-            secondary: { noWrap: true },
+            primary: { noWrap: true, fontSize: '0.8rem' },
+            secondary: { noWrap: true, fontSize: '0.68rem', color: 'text.secondary' },
           }}
         />
         {position && (
           <>
+            <Typography
+              variant="caption"
+              style={{ fontSize: '0.7rem', marginRight: 4 }}
+            >
+              {(() => {
+                const speedKmh = position?.speed != null ? Math.round(position.speed * 1.852) : 0;
+                return `${speedKmh >= 10 ? speedKmh : 0} km/h`;
+              })()}
+            </Typography>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 32 }}>
+              <Tooltip title={statusTooltip}>
+                <IconButton size="small">
+                  <SignalCellularAltIcon
+                    fontSize="small"
+                    style={{ transform: 'scale(0.8)' }}
+                    className={classes[getStatusColor(item.status)]}
+                  />
+                </IconButton>
+              </Tooltip>
+            </div>
             {position.attributes.hasOwnProperty('alarm') && (
               <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
                 <IconButton size="small">
